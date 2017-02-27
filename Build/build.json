@@ -1,0 +1,11 @@
+{
+"companyName": "Coffee",
+"productName": "SoftMaskForUGUI",
+"dataUrl": "build.data.unityweb",
+"asmCodeUrl": "build.asm.code.unityweb",
+"asmMemoryUrl": "build.asm.memory.unityweb",
+"asmFrameworkUrl": "build.asm.framework.unityweb",
+"TOTAL_MEMORY": 268435456,
+"splashScreenStyle": "Dark",
+"backgroundColor": "#231F20"
+}
