@@ -33,14 +33,9 @@ sysinfo.txt
 
 
 # Packages
-build.app
-unity.log
-
-.vs/
-_Android/
-_iOS/
-_WebGL/
-_Standalone/
-Assets/TextMesh Pro/
-Assets/TextMesh Pro.meta
-PackageTest
+.vs
+node_modules
+.idea
+Assets/Plugins.meta
+Assets/Plugins
+Logs/
