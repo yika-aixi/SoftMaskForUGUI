@@ -9,15 +9,23 @@ namespace Coffee.UIExtensions.Demos
 	{
 		[SerializeField] RawImage[] softMaskBufferViewer;
 		[SerializeField] SoftMask[] softMask;
+		[SerializeField] Text text;
 
 
 		// Use this for initialization
 		void OnEnable()
 		{
+			text.text = string.Format("GPU: {0}\nDeviceType: {1}\nShaderLevel: {2}\nUVStartsAtTop: {3}",
+                SystemInfo.graphicsDeviceName,
+                SystemInfo.graphicsDeviceType,
+                SystemInfo.graphicsShaderLevel,
+                SystemInfo.graphicsUVStartsAtTop);
+
 			for (int i = 0; i < softMask.Length; i++)
 			{
 				softMaskBufferViewer[i].texture = softMask[i].softMaskBuffer;
 			}
+
 		}
 	
 		// Update is called once per frame
