@@ -6,6 +6,8 @@ on:
       - preview
       - master
       - v*.x
+    tags-ignore:
+      - "**"
 
 jobs:
   prepare:
@@ -28,4 +30,4 @@ jobs:
       - run: npm run release
         env:
           NPM_TOKEN: ${{secrets.NPM_TOKEN}}
-          GH_TOKEN: ${{secrets.GH_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
