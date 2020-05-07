@@ -384,7 +384,7 @@ namespace Coffee.UIExtensions
 			hasChanged = true;
 		}
 
-// #if UNITY_EDITOR
+#if UNITY_EDITOR
 		/// <summary>
 		/// Update the scene view matrix for shader.
 		/// </summary>
@@ -421,7 +421,7 @@ namespace Coffee.UIExtensions
 			base.OnValidate();
 			_hasStencilStateChanged = false;
 		}
-// #endif
+#endif
 
 		//################################
 		// Private Members.
