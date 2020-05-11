@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
-namespace Coffee.UIExtensions
+namespace Coffee.UISoftMask
 {
 	/// <summary>
 	/// Soft mask.

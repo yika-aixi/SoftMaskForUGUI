@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.UI;
 using MaskIntr = UnityEngine.SpriteMaskInteraction;
 
-namespace Coffee.UIExtensions
+namespace Coffee.UISoftMask
 {
 	/// <summary>
 	/// Soft maskable.

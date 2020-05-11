@@ -5,7 +5,7 @@ using UnityEditor;
 using System.Linq;
 
 
-namespace Coffee.UIExtensions.Editors
+namespace Coffee.UISoftMask
 {
 	/// <summary>
 	/// SoftMask editor.
@@ -41,8 +41,8 @@ namespace Coffee.UIExtensions.Editors
 					{
 						p.gameObject.AddComponent<SoftMaskable> ();
 					}
-					
-					Utils.MarkPrefabDirty ();
+
+					EditorUtils.MarkPrefabDirty ();
 				}
 				if (GUILayout.Button ("Ping"))
 				{

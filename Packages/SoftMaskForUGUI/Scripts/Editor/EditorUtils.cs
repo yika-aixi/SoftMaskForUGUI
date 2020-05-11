@@ -4,15 +4,15 @@ using UnityEditor.Experimental.SceneManagement;
 using UnityEditor.SceneManagement;
 
 
-namespace Coffee.UIExtensions.Editors
+namespace Coffee.UISoftMask
 {
-    public static class Utils
+    public static class EditorUtils
     {
         public static void MarkPrefabDirty ()
         {
             #if UNITY_2018_3_OR_NEWER
                 var prefabStage = PrefabStageUtility.GetCurrentPrefabStage ();
-                if (prefabStage != null) 
+                if (prefabStage != null)
                 {
                     EditorSceneManager.MarkSceneDirty (prefabStage.scene);
                 }

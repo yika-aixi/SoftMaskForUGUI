@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 using MaskIntr = UnityEngine.SpriteMaskInteraction;
 using System.IO;
 
-namespace Coffee.UIExtensions.Editors
+namespace Coffee.UISoftMask
 {
 	/// <summary>
 	/// SoftMaskable editor.
@@ -98,7 +98,7 @@ namespace Coffee.UIExtensions.Editors
 
 			s_MaskWarning = new GUIContent(EditorGUIUtility.FindTexture("console.warnicon.sml"), "This component is not SoftMask. Use SoftMask instead of Mask.");
 		}
-		
+
 		void OnDisable ()
 		{
 			ClearMaterialEditors ();
@@ -235,7 +235,7 @@ namespace Coffee.UIExtensions.Editors
 					ShowMaterialEditors (fontSharedMaterials, 1, fontSharedMaterials.Length - 1);
 				}
 			}
-			
+
 			if (!DetectMask (current.transform.parent))
 			{
 				GUILayout.BeginHorizontal ();
@@ -243,8 +243,8 @@ namespace Coffee.UIExtensions.Editors
 				if (GUILayout.Button ("Remove", GUILayout.Height (40)))
 				{
 					DestroyImmediate (current);
-					
-					Utils.MarkPrefabDirty ();
+
+					EditorUtils.MarkPrefabDirty ();
 				}
 				GUILayout.EndHorizontal ();
 			}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Coffee.UIExtensions.Demos
+namespace Coffee.UISoftMask.Demos
 {
 	public class SoftMask_Demo : MonoBehaviour
 	{
