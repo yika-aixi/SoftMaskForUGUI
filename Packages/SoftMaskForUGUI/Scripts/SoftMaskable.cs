@@ -90,10 +90,13 @@ namespace Coffee.UISoftMask
         Material IMaterialModifier.GetModifiedMaterial(Material baseMaterial)
         {
             _softMask = null;
-            if (!isActiveAndEnabled)
-            {
-                return baseMaterial;
-            }
+
+            // Unregister the previous material
+            MaterialCache.Unregister(_effectMaterialHash);
+            _effectMaterialHash = k_InvalidHash;
+
+            // If this component is disabled, the material is returned as is.
+            if (!isActiveAndEnabled) return baseMaterial;
 
             // Find the nearest parent softmask.
             var parentTransform = transform.parent;
@@ -109,46 +112,37 @@ namespace Coffee.UISoftMask
                 parentTransform = parentTransform.parent;
             }
 
-            var oldHash = _effectMaterialHash;
-            var modifiedMaterial = baseMaterial;
-            if (_softMask)
-            {
-                _effectMaterialHash = GetMaterialHash(baseMaterial);
-                modifiedMaterial = MaterialCache.Register(baseMaterial, _effectMaterialHash, mat =>
-                {
-                    mat.shader = Shader.Find(string.Format("Hidden/{0} (SoftMaskable)", mat.shader.name));
-#if UNITY_EDITOR
-                    mat.EnableKeyword("SOFTMASK_EDITOR");
-#endif
-                    mat.SetTexture(s_SoftMaskTexId, _softMask.softMaskBuffer);
-                    mat.SetInt(s_StencilCompId,
-                        m_UseStencil ? (int) CompareFunction.Equal : (int) CompareFunction.Always);
-                    mat.SetVector(s_MaskInteractionId, new Vector4(
-                        (m_MaskInteraction & 0x3),
-                        ((m_MaskInteraction >> 2) & 0x3),
-                        ((m_MaskInteraction >> 4) & 0x3),
-                        ((m_MaskInteraction >> 6) & 0x3)
-                    ));
-                });
-                ReleaseMaterial(ref _maskMaterial);
-                _maskMaterial = modifiedMaterial;
-            }
+            // If the parents do not have a soft mask component, the material is returned as is.
+            if (!_softMask) return baseMaterial;
 
-            MaterialCache.Unregister(oldHash);
-            return modifiedMaterial;
-        }
-
-        private Hash128 GetMaterialHash(Material material)
-        {
-            if (!isActiveAndEnabled || !material || !material.shader)
-                return k_InvalidHash;
-
-            return new Hash128(
-                (uint) material.GetInstanceID(),
+            // Generate soft maskable material.
+            _effectMaterialHash = new Hash128(
+                (uint) baseMaterial.GetInstanceID(),
+                (uint) _softMask.GetInstanceID(),
                 (uint) m_MaskInteraction,
-                (uint) (m_UseStencil ? 1 : 0),
-                0
+                (uint) (m_UseStencil ? 1 : 0)
             );
+
+            // Generate soft maskable material.
+            var modifiedMaterial = MaterialCache.Register(baseMaterial, _effectMaterialHash, mat =>
+            {
+                mat.shader = Shader.Find(string.Format("Hidden/{0} (SoftMaskable)", mat.shader.name));
+#if UNITY_EDITOR
+                mat.EnableKeyword("SOFTMASK_EDITOR");
+#endif
+                mat.SetTexture(s_SoftMaskTexId, _softMask.softMaskBuffer);
+                mat.SetInt(s_StencilCompId,
+                    m_UseStencil ? (int) CompareFunction.Equal : (int) CompareFunction.Always);
+                mat.SetVector(s_MaskInteractionId, new Vector4(
+                    (m_MaskInteraction & 0x3),
+                    ((m_MaskInteraction >> 2) & 0x3),
+                    ((m_MaskInteraction >> 4) & 0x3),
+                    ((m_MaskInteraction >> 6) & 0x3)
+                ));
+            });
+            _maskMaterial = modifiedMaterial;
+
+            return modifiedMaterial;
         }
 
         /// <summary>
@@ -225,29 +219,10 @@ namespace Coffee.UISoftMask
 
             graphic.SetMaterialDirtyEx();
             _softMask = null;
-            ReleaseMaterial(ref _maskMaterial);
 
             MaterialCache.Unregister(_effectMaterialHash);
             _effectMaterialHash = k_InvalidHash;
         }
-
-        /// <summary>
-        /// Release the material.
-        /// </summary>
-        static void ReleaseMaterial(ref Material mat)
-        {
-            if (!mat) return;
-
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                DestroyImmediate(mat);
-            else
-#endif
-                Destroy(mat);
-
-            mat = null;
-        }
-
 
 #if UNITY_EDITOR
         /// <summary>
