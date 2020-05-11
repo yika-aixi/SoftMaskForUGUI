@@ -26,9 +26,11 @@ namespace Coffee.UISoftMask
 
     public class GraphicConnector
     {
-
         private static readonly List<GraphicConnector> s_Connectors = new List<GraphicConnector>();
-        private static readonly Dictionary<Type, GraphicConnector> s_ConnectorMap = new Dictionary<Type, GraphicConnector>();
+
+        private static readonly Dictionary<Type, GraphicConnector> s_ConnectorMap =
+            new Dictionary<Type, GraphicConnector>();
+
         private static readonly GraphicConnector s_EmptyConnector = new GraphicConnector();
 
 #if UNITY_EDITOR
@@ -72,7 +74,6 @@ namespace Coffee.UISoftMask
         {
             get { return -1; }
         }
-
 
 
         /// <summary>
