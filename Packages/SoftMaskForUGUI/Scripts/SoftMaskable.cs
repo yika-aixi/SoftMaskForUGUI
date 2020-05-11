@@ -1,10 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using MaskIntr = UnityEngine.SpriteMaskInteraction;
-using UnityEngine.Serialization;
 
 namespace Coffee.UIExtensions
 {
@@ -17,18 +15,15 @@ namespace Coffee.UIExtensions
 #else
 	[ExecuteInEditMode]
 # endif
-	public class SoftMaskable : MonoBehaviour, IMaterialModifier, ICanvasRaycastFilter, ISerializationCallbackReceiver
+	public class SoftMaskable : MonoBehaviour, IMaterialModifier, ICanvasRaycastFilter
+#if UNITY_EDITOR
+		, ISerializationCallbackReceiver
+# endif
 	{
-		//################################
-		// Constant or Static Members.
-		//################################
 		const int kVisibleInside = (1 << 0) + (1 << 2) + (1 << 4) + (1 << 6);
 		const int kVisibleOutside = (2 << 0) + (2 << 2) + (2 << 4) + (2 << 6);
+		static readonly Hash128 k_InvalidHash = new Hash128();
 
-
-		//################################
-		// Serialize Members.
-		//################################
 		[Tooltip("The graphic will be visible only in areas where no mask is present.")]
 		[System.Obsolete]
 		[HideInInspector]
@@ -41,10 +36,16 @@ namespace Coffee.UIExtensions
 		[Tooltip("Use soft-masked raycast target.\n\nNote: This option is expensive.")]
 		[SerializeField] bool m_RaycastFilter = false;
 
+		Graphic _graphic = null;
+		SoftMask _softMask = null;
+		Material _maskMaterial = null;
+		static int s_SoftMaskTexId;
+		static int s_StencilCompId;
+		static int s_MaskInteractionId;
+		static List<SoftMaskable> s_ActiveSoftMaskables;
+		static int[] s_Interactions = new int[4];
+		Hash128 _effectMaterialHash;
 
-		//################################
-		// Public Members.
-		//################################
 		/// <summary>
 		/// Perform material modification in this function.
 		/// </summary>
@@ -71,34 +72,46 @@ namespace Coffee.UIExtensions
 				parentTransform = parentTransform.parent;
 			}
 
-			Material result = baseMaterial;
+			var oldHash = _effectMaterialHash;
+			var modifiedMaterial = baseMaterial;
 			if (_softMask)
 			{
-				result = new Material(baseMaterial);
-				result.hideFlags = HideFlags.HideAndDontSave;
-				result.SetTexture(s_SoftMaskTexId, _softMask.softMaskBuffer);
-				result.SetInt(s_StencilCompId, m_UseStencil ? (int)CompareFunction.Equal : (int)CompareFunction.Always);
-				result.SetVector(s_MaskInteractionId, new Vector4(
+				_effectMaterialHash = GetMaterialHash(baseMaterial);
+				modifiedMaterial = MaterialCache.Register(baseMaterial, _effectMaterialHash, mat =>
+				{
+					Debug.Log(mat.shader.name);
+					mat.shader = Shader.Find(string.Format("Hidden/{0} (SoftMaskable)", mat.shader.name));
+#if UNITY_EDITOR
+					mat.EnableKeyword("SOFTMASK_EDITOR");
+#endif
+					mat.SetTexture(s_SoftMaskTexId, _softMask.softMaskBuffer);
+					mat.SetInt(s_StencilCompId, m_UseStencil ? (int)CompareFunction.Equal : (int)CompareFunction.Always);
+					mat.SetVector(s_MaskInteractionId, new Vector4(
 						(m_MaskInteraction & 0x3),
 						((m_MaskInteraction >> 2) & 0x3),
 						((m_MaskInteraction >> 4) & 0x3),
 						((m_MaskInteraction >> 6) & 0x3)
 					));
-
-				StencilMaterial.Remove(baseMaterial);
+				});
 				ReleaseMaterial(ref _maskMaterial);
-				_maskMaterial = result;
-
-				#if UNITY_EDITOR
-				result.EnableKeyword("SOFTMASK_EDITOR");
-				#endif
-			}
-			else
-			{
-				baseMaterial.SetTexture(s_SoftMaskTexId, Texture2D.whiteTexture);
+				_maskMaterial = modifiedMaterial;
 			}
 
-			return result;
+			MaterialCache.Unregister(oldHash);
+			return modifiedMaterial;
+		}
+
+		private Hash128 GetMaterialHash(Material material)
+		{
+			if (!isActiveAndEnabled || !material || !material.shader)
+				return k_InvalidHash;
+
+			return new Hash128(
+				(uint) material.GetInstanceID(),
+				(uint) m_MaskInteraction,
+				(uint) (m_UseStencil ? 1 : 0),
+				0
+			);
 		}
 
 		/// <summary>
@@ -111,15 +124,10 @@ namespace Coffee.UIExtensions
 		{
 			if (!isActiveAndEnabled || !_softMask)
 				return true;
-
 			if (!RectTransformUtility.RectangleContainsScreenPoint(transform as RectTransform, sp, eventCamera))
-			{
 				return false;
-			}
-            else if (!m_RaycastFilter)
-            {
+			if (!m_RaycastFilter)
 				return true;
-            }
 
 			var sm = _softMask;
 			for (int i = 0; i < 4; i++)
@@ -144,7 +152,7 @@ namespace Coffee.UIExtensions
 				if (m_MaskInteraction != intValue)
 				{
 					m_MaskInteraction = intValue;
-					graphic.SetMaterialDirty();
+					graphic.SetMaterialDirtyEx();
 				}
 			}
 		}
@@ -177,37 +185,9 @@ namespace Coffee.UIExtensions
 		public void SetMaskInteraction(SpriteMaskInteraction layer0, SpriteMaskInteraction layer1, SpriteMaskInteraction layer2, SpriteMaskInteraction layer3)
 		{
 			m_MaskInteraction = (int)layer0 + ((int)layer1 << 2) + ((int)layer2 << 4) + ((int)layer3 << 6);
-			if (graphic)
-			{
-				graphic.SetMaterialDirty();
-			}
+			graphic.SetMaterialDirtyEx();
 		}
 
-		//################################
-		// Private Members.
-		//################################
-		Graphic _graphic = null;
-		SoftMask _softMask = null;
-		Material _maskMaterial = null;
-		static int s_SoftMaskTexId;
-		static int s_StencilCompId;
-		static int s_MaskInteractionId;
-		static List<SoftMaskable> s_ActiveSoftMaskables;
-		static int[] s_Interactions = new int[4];
-		static Material s_DefaultMaterial;
-
-#if UNITY_EDITOR
-		/// <summary>
-		/// This function is called when the script is loaded or a value is changed in the inspector (Called in the editor only).
-		/// </summary>
-		void OnValidate()
-		{
-			if (graphic)
-			{
-				graphic.SetMaterialDirty();
-			}
-		}
-#endif
 
 		/// <summary>
 		/// This function is called when the object becomes enabled and active.
@@ -229,10 +209,6 @@ namespace Coffee.UIExtensions
 			var g = graphic;
 			if (g)
 			{
-				if (!g.material || g.material == Graphic.defaultGraphicMaterial)
-				{
-					g.material = s_DefaultMaterial ?? (s_DefaultMaterial = new Material(Resources.Load<Shader>("UI-Default-SoftMask")) { hideFlags = HideFlags.HideAndDontSave, });
-				}
 				g.SetMaterialDirty();
 			}
 			_softMask = null;
@@ -248,15 +224,14 @@ namespace Coffee.UIExtensions
 			var g = graphic;
 			if (g)
 			{
-				if (g.material == s_DefaultMaterial)
-				{
-					g.material = null;
-				}
 				g.SetMaterialDirty();
 			}
 			ReleaseMaterial(ref _maskMaterial);
 
 			_softMask = null;
+
+			MaterialCache.Unregister(_effectMaterialHash);
+			_effectMaterialHash = k_InvalidHash;
 		}
 
 		/// <summary>
@@ -266,8 +241,6 @@ namespace Coffee.UIExtensions
 		{
 			if (mat)
 			{
-				StencilMaterial.Remove(mat);
-
 				#if UNITY_EDITOR
 				if (!Application.isPlaying)
 				{
@@ -283,6 +256,15 @@ namespace Coffee.UIExtensions
 		}
 
 
+#if UNITY_EDITOR
+		/// <summary>
+		/// This function is called when the script is loaded or a value is changed in the inspector (Called in the editor only).
+		/// </summary>
+		private void OnValidate()
+		{
+			graphic.SetMaterialDirtyEx();
+		}
+
 		void ISerializationCallbackReceiver.OnBeforeSerialize()
 		{
 		}
@@ -296,6 +278,18 @@ namespace Coffee.UIExtensions
 				m_MaskInteraction = (2 << 0) + (2 << 2) + (2 << 4) + (2 << 6);
 			}
 			#pragma warning restore 0612
+
+			var current = this;
+			UnityEditor.EditorApplication.delayCall += () =>
+			{
+				if (current && graphic && graphic.material && graphic.material.shader && graphic.material.shader.name == "Hidden/UI/Default (SoftMaskable)")
+				{
+					Debug.LogFormat("OnAfterDeserialize: reset material {0}",current);
+					graphic.material = null;
+					graphic.SetMaterialDirtyEx();
+				}
+			};
+#endif
 		}
 	}
 }

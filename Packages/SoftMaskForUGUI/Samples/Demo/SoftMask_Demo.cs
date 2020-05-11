@@ -10,11 +10,14 @@ namespace Coffee.UIExtensions.Demos
 		[SerializeField] RawImage[] softMaskBufferViewer;
 		[SerializeField] SoftMask[] softMask;
 		[SerializeField] Text text;
+		[SerializeField] GameObject title;
 
 
 		// Use this for initialization
 		void OnEnable()
 		{
+			title.SetActive(true);
+
 			text.text = string.Format("GPU: {0}\nDeviceType: {1}\nShaderLevel: {2}\nUVStartsAtTop: {3}",
                 SystemInfo.graphicsDeviceName,
                 SystemInfo.graphicsDeviceType,
@@ -25,13 +28,6 @@ namespace Coffee.UIExtensions.Demos
 			{
 				softMaskBufferViewer[i].texture = softMask[i].softMaskBuffer;
 			}
-
-		}
-	
-		// Update is called once per frame
-		void Update()
-		{
-		
 		}
 
 		public void SetWorldSpase(bool flag)
