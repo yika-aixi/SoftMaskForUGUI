@@ -57,9 +57,8 @@ namespace Coffee.UISoftMask
             }
 
             // Preview buffer.
-            GUILayout.BeginHorizontal(EditorStyles.helpBox);
-            if (s_Preview != (s_Preview = EditorGUILayout.ToggleLeft("Preview Buffer", s_Preview,
-                GUILayout.MaxWidth(EditorGUIUtility.labelWidth))))
+            GUILayout.BeginVertical(EditorStyles.helpBox);
+            if (s_Preview != (s_Preview = EditorGUILayout.ToggleLeft("Preview Buffer", s_Preview)))
             {
                 EditorPrefs.SetBool(k_PrefsPreview, s_Preview);
             }
@@ -71,9 +70,7 @@ namespace Coffee.UISoftMask
                 EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(width, 128), tex, null, ScaleMode.ScaleToFit);
                 Repaint();
             }
-
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
         }
 
 
