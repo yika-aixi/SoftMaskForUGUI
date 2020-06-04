@@ -82,6 +82,9 @@ namespace Coffee.UISoftMask
         [SerializeField, Tooltip("Is the soft mask a part of parent soft mask?")]
         private bool m_PartOfParent = false;
 
+        [SerializeField, Tooltip("Self Graphic will not be drawn to soft mask buffer.")]
+        private bool m_IgnoreSelfGraphic;
+
 
         /// <summary>
         /// The desampling rate for soft mask buffer.
@@ -210,6 +213,19 @@ namespace Coffee.UISoftMask
             get { return _parent; }
         }
 
+        public bool ignoreSelfGraphic
+        {
+            get { return m_IgnoreSelfGraphic; }
+            set
+            {
+                if (m_IgnoreSelfGraphic == value) return;
+                m_IgnoreSelfGraphic = value;
+                hasChanged = true;
+                graphic.SetVerticesDirtyEx();
+            }
+        }
+
+
         Material material
         {
             get
@@ -263,7 +279,15 @@ namespace Coffee.UISoftMask
         void IMeshModifier.ModifyMesh(VertexHelper verts)
         {
             if (isActiveAndEnabled)
+            {
+                if (ignoreSelfGraphic)
+                {
+                    verts.Clear();
+                }
+
                 verts.FillMesh(mesh);
+            }
+
             hasChanged = true;
         }
 
@@ -407,6 +431,7 @@ namespace Coffee.UISoftMask
         /// </summary>
         protected override void OnValidate()
         {
+            graphic.SetVerticesDirtyEx();
             graphic.SetMaterialDirtyEx();
             OnTransformParentChanged();
             base.OnValidate();
