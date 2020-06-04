@@ -144,17 +144,41 @@ namespace Coffee.UISoftMask
                 return true;
             if (!RectTransformUtility.RectangleContainsScreenPoint(transform as RectTransform, sp, eventCamera))
                 return false;
-            if (!m_RaycastFilter)
-                return true;
 
-            var sm = softMask;
-            for (var i = 0; i < 4; i++)
+            if (m_RaycastFilter)
             {
-                s_Interactions[i] = sm ? ((m_MaskInteraction >> i * 2) & 0x3) : 0;
-                sm = sm ? sm.parent : null;
-            }
+                var sm = _softMask;
+                for (var i = 0; i < 4; i++)
+                {
+                    s_Interactions[i] = sm ? ((m_MaskInteraction >> i * 2) & 0x3) : 0;
+                    sm = sm ? sm.parent : null;
+                }
 
-            return softMask.IsRaycastLocationValid(sp, eventCamera, graphic, s_Interactions);
+                return _softMask.IsRaycastLocationValid(sp, eventCamera, graphic, s_Interactions);
+            }
+            else
+            {
+                var sm = _softMask;
+                for (var i = 0; i < 4; i++)
+                {
+                    if (!sm) break;
+                    s_Interactions[i] = sm ? ((m_MaskInteraction >> i * 2) & 0x3) : 0;
+                    var interaction = s_Interactions[i] == 1;
+                    var inRect = RectTransformUtility.RectangleContainsScreenPoint(sm.transform as RectTransform, sp, eventCamera);
+                    if (!sm.ignoreSelfGraphic && interaction != inRect) return false;
+
+                    foreach (var child in sm._children)
+                    {
+                        if (!child) break;
+                        var inRectChild = RectTransformUtility.RectangleContainsScreenPoint(child.transform as RectTransform, sp, eventCamera);
+                        if (!child.ignoreSelfGraphic && interaction != inRectChild) return false;
+                    }
+
+                    sm = sm ? sm.parent : null;
+                }
+
+                return true;
+            }
         }
 
         /// <summary>

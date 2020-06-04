@@ -62,7 +62,7 @@ namespace Coffee.UISoftMask
         private int _stencilDepth;
         private Mesh _mesh;
         private SoftMask _parent;
-        private readonly List<SoftMask> _children = new List<SoftMask>();
+        internal readonly List<SoftMask> _children = new List<SoftMask>();
         private bool _hasChanged = false;
         private bool _hasStencilStateChanged = false;
 
