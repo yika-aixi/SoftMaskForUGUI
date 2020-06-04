@@ -8,7 +8,7 @@
 
 ## How to contribute this repository
 
-See [CONTRIBUTING.md](/../../blob/upm/CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](/../../CODE_OF_CONDUCT.md).
+See [CONTRIBUTING.md](/../../blob/develop/CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](/../../blob/develop/CODE_OF_CONDUCT.md).
 
 <br><br><br>
 
