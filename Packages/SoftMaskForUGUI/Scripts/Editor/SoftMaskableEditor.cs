@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
-using System.Linq;
 using MaskIntr = UnityEngine.SpriteMaskInteraction;
 
 namespace Coffee.UISoftMask
