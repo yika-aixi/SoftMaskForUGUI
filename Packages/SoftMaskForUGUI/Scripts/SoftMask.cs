@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -443,6 +444,7 @@ namespace Coffee.UISoftMask
         /// </summary>
         static void UpdateMaskTextures()
         {
+            Profiler.BeginSample("UpdateMaskTextures");
             foreach (var sm in s_ActiveSoftMasks)
             {
                 if (!sm || sm._hasChanged)
@@ -458,6 +460,7 @@ namespace Coffee.UISoftMask
                     if (!cam)
                         continue;
 
+                    Profiler.BeginSample("Check view projection matrix changed (world space)");
                     var nowVP = cam.projectionMatrix * cam.worldToCameraMatrix;
                     var previousVP = default(Matrix4x4);
                     var id = cam.GetInstanceID();
@@ -468,6 +471,8 @@ namespace Coffee.UISoftMask
                     {
                         sm.hasChanged = true;
                     }
+
+                    Profiler.EndSample();
                 }
 
                 var rt = sm.rectTransform;
@@ -484,6 +489,7 @@ namespace Coffee.UISoftMask
 #endif
             }
 
+            Profiler.BeginSample("Update changed soft masks");
             foreach (var sm in s_ActiveSoftMasks)
             {
                 if (!sm || !sm._hasChanged)
@@ -495,9 +501,15 @@ namespace Coffee.UISoftMask
 
                 if (!sm._hasStencilStateChanged) continue;
                 sm._hasStencilStateChanged = false;
+
+                Profiler.BeginSample("Notify stencil state changed");
                 MaskUtilities.NotifyStencilStateChanged(sm);
+                Profiler.EndSample();
             }
 
+            Profiler.EndSample();
+
+            Profiler.BeginSample("Update previous view projection matrices");
             s_PreviousViewProjectionMatrices.Clear();
             foreach (var kv in s_NowViewProjectionMatrices)
             {
@@ -505,6 +517,9 @@ namespace Coffee.UISoftMask
             }
 
             s_NowViewProjectionMatrices.Clear();
+            Profiler.EndSample();
+
+            Profiler.EndSample();
         }
 
         /// <summary>
@@ -513,11 +528,14 @@ namespace Coffee.UISoftMask
         private void UpdateMaskTexture()
         {
             if (!graphic || !graphic.canvas) return;
+            Profiler.BeginSample("UpdateMaskTexture");
+
 
             _stencilDepth =
                 MaskUtilities.GetStencilDepth(transform, MaskUtilities.FindRootSortOverrideCanvas(transform));
 
             // Collect children soft masks.
+            Profiler.BeginSample("Collect children soft masks");
             var depth = 0;
             s_TmpSoftMasks[0].Add(this);
             while (_stencilDepth + depth < 3)
@@ -538,12 +556,17 @@ namespace Coffee.UISoftMask
                 depth++;
             }
 
-            // Clear.
+            Profiler.EndSample();
+
+            // CommandBuffer.
+            Profiler.BeginSample("Initialize CommandBuffer");
             _cb.Clear();
             _cb.SetRenderTarget(softMaskBuffer);
             _cb.ClearRenderTarget(false, true, s_ClearColors[_stencilDepth]);
+            Profiler.EndSample();
 
             // Set view and projection matrices.
+            Profiler.BeginSample("Set view and projection matrices");
             var c = graphic.canvas.rootCanvas;
             var cam = c.worldCamera ?? Camera.main;
             if (c && c.renderMode != RenderMode.ScreenSpaceOverlay && cam)
@@ -577,7 +600,10 @@ namespace Coffee.UISoftMask
 #endif
             }
 
+            Profiler.EndSample();
+
             // Draw soft masks.
+            Profiler.BeginSample("Draw Mesh");
             for (var i = 0; i < s_TmpSoftMasks.Length; i++)
             {
                 var count = s_TmpSoftMasks[i].Count;
@@ -604,7 +630,10 @@ namespace Coffee.UISoftMask
                 s_TmpSoftMasks[i].Clear();
             }
 
+            Profiler.EndSample();
+
             Graphics.ExecuteCommandBuffer(_cb);
+            Profiler.EndSample();
         }
 
         /// <summary>
