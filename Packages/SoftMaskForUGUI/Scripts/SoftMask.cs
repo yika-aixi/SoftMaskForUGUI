@@ -499,9 +499,9 @@ namespace Coffee.UISoftMask
             }
 
             s_PreviousViewProjectionMatrices.Clear();
-            foreach (var id in s_NowViewProjectionMatrices.Keys)
+            foreach (var kv in s_NowViewProjectionMatrices)
             {
-                s_PreviousViewProjectionMatrices[id] = s_NowViewProjectionMatrices[id];
+                s_PreviousViewProjectionMatrices.Add(kv.Key, kv.Value);
             }
 
             s_NowViewProjectionMatrices.Clear();
