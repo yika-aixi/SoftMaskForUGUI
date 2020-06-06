@@ -86,6 +86,9 @@ namespace Coffee.UISoftMask
         private bool m_IgnoreSelfGraphic;
 
 
+        [SerializeField, Tooltip("Self graphic will not be written to stencil buffer.")]
+        private bool m_IgnoreSelfStencil;
+
         /// <summary>
         /// The desampling rate for soft mask buffer.
         /// </summary>
@@ -225,6 +228,20 @@ namespace Coffee.UISoftMask
             }
         }
 
+        public bool ignoreSelfStencil
+        {
+            get { return m_IgnoreSelfStencil; }
+            set
+            {
+                if (m_IgnoreSelfStencil == value) return;
+                m_IgnoreSelfStencil = value;
+                hasChanged = true;
+                graphic.SetVerticesDirtyEx();
+                graphic.SetMaterialDirtyEx();
+            }
+        }
+
+
 
         Material material
         {
@@ -254,6 +271,8 @@ namespace Coffee.UISoftMask
         public override Material GetModifiedMaterial(Material baseMaterial)
         {
             hasChanged = true;
+            if (ignoreSelfStencil) return baseMaterial;
+
             var result = base.GetModifiedMaterial(baseMaterial);
             if (m_IgnoreParent && result != baseMaterial)
             {
@@ -283,9 +302,17 @@ namespace Coffee.UISoftMask
                 if (ignoreSelfGraphic)
                 {
                     verts.Clear();
+                    verts.FillMesh(mesh);
                 }
-
-                verts.FillMesh(mesh);
+                else if (ignoreSelfStencil)
+                {
+                    verts.FillMesh(mesh);
+                    verts.Clear();
+                }
+                else
+                {
+                    verts.FillMesh(mesh);
+                }
             }
 
             hasChanged = true;
