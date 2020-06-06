@@ -72,6 +72,20 @@ namespace Coffee.UISoftMask
         }
 
         /// <summary>
+        /// Use stencil to mask.
+        /// </summary>
+        public bool useStencil
+        {
+            get { return m_UseStencil; }
+            set
+            {
+                if (m_UseStencil == value) return;
+                m_UseStencil = value;
+                graphic.SetMaterialDirtyEx();
+            }
+        }
+
+        /// <summary>
         /// The graphic associated with the soft mask.
         /// </summary>
         public Graphic graphic
