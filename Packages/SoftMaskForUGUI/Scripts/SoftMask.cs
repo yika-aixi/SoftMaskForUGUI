@@ -82,7 +82,7 @@ namespace Coffee.UISoftMask
         [SerializeField, Tooltip("Is the soft mask a part of parent soft mask?")]
         private bool m_PartOfParent = false;
 
-        [SerializeField, Tooltip("Self Graphic will not be drawn to soft mask buffer.")]
+        [SerializeField, Tooltip("Self graphic will not be drawn to soft mask buffer.")]
         private bool m_IgnoreSelfGraphic;
 
 
