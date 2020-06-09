@@ -55,6 +55,8 @@ namespace Coffee.UISoftMask
         private static int s_GameVPId;
         private static int s_GameTVPId;
         private static int s_Alpha;
+        private static int s_PreviousWidth;
+        private static int s_PreviousHeight;
         private MaterialPropertyBlock _mpb;
         private CommandBuffer _cb;
         private Material _material;
@@ -544,6 +546,16 @@ namespace Coffee.UISoftMask
             Profiler.EndSample();
 
             Profiler.EndSample();
+
+#if UNITY_EDITOR
+            var w = s_PreviousWidth;
+            var h = s_PreviousHeight;
+            GetDesamplingSize(DesamplingRate.None, out s_PreviousWidth, out  s_PreviousHeight);
+            if (w != s_PreviousWidth || h != s_PreviousHeight)
+            {
+                Canvas.ForceUpdateCanvases();
+            }
+#endif
         }
 
         /// <summary>
