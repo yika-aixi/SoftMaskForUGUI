@@ -76,7 +76,6 @@ Shader "Hidden/UI/Default (SoftMaskable)"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            sampler2D _MainTex;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
@@ -85,7 +84,9 @@ Shader "Hidden/UI/Default (SoftMaskable)"
             v2f vert(appdata_t v)
             {
                 v2f OUT;
+
                 UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_INITIALIZE_OUTPUT(v2f, OUT);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
                 OUT.worldPosition = v.vertex;
                 OUT.vertex = UnityObjectToClipPos(OUT.worldPosition);
@@ -97,9 +98,22 @@ Shader "Hidden/UI/Default (SoftMaskable)"
                 return OUT;
             }
 
+            UNITY_DECLARE_SCREENSPACE_TEXTURE(_MainTex);
+
             fixed4 frag(v2f IN) : SV_Target
             {
-                half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+                //half2 viewa = IN.vertex.xy/_ScreenParams.xy;
+
+                //fixed4 c = lerp(tex2D(_SoftMaskTex, viewa), tex2D(_SoftMaskTex2, viewa), unity_StereoEyeIndex);
+                //viewa = lerp(viewa, viewa - half2(1, 0), unity_StereoEyeIndex);
+                //fixed4 c = unity_StereoEyeIndex;
+                //c.a = 1;
+               // c.rg = viewa;
+               // c.b = 0;
+                //return c;
+
+                half4 color = (UNITY_SAMPLE_SCREENSPACE_TEXTURE(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
 
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
 

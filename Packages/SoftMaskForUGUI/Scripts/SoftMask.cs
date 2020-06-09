@@ -61,6 +61,7 @@ namespace Coffee.UISoftMask
         private CommandBuffer _cb;
         private Material _material;
         private RenderTexture _softMaskBuffer;
+        private RenderTexture _softMaskBuffer2;
         private int _stencilDepth;
         private Mesh _mesh;
         private SoftMask _parent;
@@ -195,6 +196,39 @@ namespace Coffee.UISoftMask
                 }
 
                 return _softMaskBuffer;
+            }
+        }
+
+
+        /// <summary>
+        /// The soft mask buffer.
+        /// </summary>
+        public RenderTexture softMaskBuffer2
+        {
+            get
+            {
+                if (_parent)
+                {
+                    ReleaseRt(ref _softMaskBuffer2);
+                    return _parent.softMaskBuffer2;
+                }
+
+                // Check the size of soft mask buffer.
+                int w, h;
+                GetDesamplingSize(m_DesamplingRate, out w, out h);
+                if (_softMaskBuffer2 && (_softMaskBuffer2.width != w || _softMaskBuffer2.height != h))
+                {
+                    ReleaseRt(ref _softMaskBuffer2);
+                }
+
+                if (!_softMaskBuffer2)
+                {
+                    _softMaskBuffer2 = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+                    hasChanged = true;
+                    _hasStencilStateChanged = true;
+                }
+
+                return _softMaskBuffer2;
             }
         }
 
@@ -553,7 +587,7 @@ namespace Coffee.UISoftMask
             GetDesamplingSize(DesamplingRate.None, out s_PreviousWidth, out  s_PreviousHeight);
             if (w != s_PreviousWidth || h != s_PreviousHeight)
             {
-                Canvas.ForceUpdateCanvases();
+                //Canvas.ForceUpdateCanvases();
             }
 #endif
         }
@@ -606,8 +640,14 @@ namespace Coffee.UISoftMask
             var cam = c.worldCamera ?? Camera.main;
             if (c && c.renderMode != RenderMode.ScreenSpaceOverlay && cam)
             {
-                var p = GL.GetGPUProjectionMatrix(cam.projectionMatrix, false);
-                _cb.SetViewProjectionMatrices(cam.worldToCameraMatrix, p);
+                var camP = cam.GetStereoProjectionMatrix(Camera.StereoscopicEye.Left);
+                var camV = cam.GetStereoViewMatrix(Camera.StereoscopicEye.Left);
+
+                Debug.Log("Left");
+                Debug.Log(camP);
+                Debug.Log(camV);
+                var p = GL.GetGPUProjectionMatrix(camP, false);
+                _cb.SetViewProjectionMatrices(camV, p);
 
 #if UNITY_EDITOR
                 var pv = p * cam.worldToCameraMatrix;
@@ -658,10 +698,70 @@ namespace Coffee.UISoftMask
                     _cb.DrawMesh(sm.mesh, sm.transform.localToWorldMatrix, sm.material, 0, 0, sm._mpb);
                 }
 
+                //s_TmpSoftMasks[i].Clear();
+            }
+
+            Profiler.EndSample();
+
+
+
+            // Set view and projection matrices.
+            Profiler.BeginSample("Set view and projection matrices");
+            _cb.SetRenderTarget(softMaskBuffer2);
+            _cb.ClearRenderTarget(false, true, s_ClearColors[_stencilDepth]);
+            if (c && c.renderMode != RenderMode.ScreenSpaceOverlay && cam)
+            {
+                var camP = cam.GetStereoProjectionMatrix(Camera.StereoscopicEye.Right);
+                var camV = cam.GetStereoViewMatrix(Camera.StereoscopicEye.Right);
+
+                var p = GL.GetGPUProjectionMatrix(camP, false);
+                Debug.Log("Right");
+                Debug.Log(camP);
+                Debug.Log(camV);
+                // p = Matrix4x4.Translate(new Vector3(1/2f,0,0)) * p * Matrix4x4.Scale(new Vector3( 1/2f,1,1));
+                _cb.SetViewProjectionMatrices(camV, p);
+            }
+            else
+            {
+                var pos = c.transform.position;
+                var vm = Matrix4x4.TRS(new Vector3(-pos.x, -pos.y, -1000), Quaternion.identity, new Vector3(1, 1, -1f));
+                var pm = Matrix4x4.TRS(new Vector3(0, 0, -1), Quaternion.identity, new Vector3(1 / pos.x, 1 / pos.y, -2 / 10000f));
+                _cb.SetViewProjectionMatrices(vm, pm);
+            }
+
+            Profiler.EndSample();
+
+            // Draw soft masks.
+            Profiler.BeginSample("Draw Mesh");
+            for (var i = 0; i < s_TmpSoftMasks.Length; i++)
+            {
+                var count = s_TmpSoftMasks[i].Count;
+                for (var j = 0; j < count; j++)
+                {
+                    var sm = s_TmpSoftMasks[i][j];
+
+                    if (i != 0)
+                    {
+                        sm._stencilDepth = MaskUtilities.GetStencilDepth(sm.transform, MaskUtilities.FindRootSortOverrideCanvas(sm.transform));
+                    }
+
+                    // Set material property.
+                    sm.material.SetInt(s_ColorMaskId, (int) 1 << (3 - _stencilDepth - i));
+                    sm._mpb.SetTexture(s_MainTexId, sm.graphic.mainTexture);
+                    sm._mpb.SetFloat(s_SoftnessId, sm.m_Softness);
+                    sm._mpb.SetFloat(s_Alpha, sm.m_Alpha);
+
+                    // Draw mesh.
+                    _cb.DrawMesh(sm.mesh, sm.transform.localToWorldMatrix, sm.material, 0, 0, sm._mpb);
+                }
+
                 s_TmpSoftMasks[i].Clear();
             }
 
             Profiler.EndSample();
+
+
+
 
             Graphics.ExecuteCommandBuffer(_cb);
             Profiler.EndSample();

@@ -130,9 +130,10 @@ namespace Coffee.UISoftMask
             {
                 mat.shader = Shader.Find(string.Format("Hidden/{0} (SoftMaskable)", mat.shader.name));
 #if UNITY_EDITOR
-                mat.EnableKeyword("SOFTMASK_EDITOR");
+                //mat.EnableKeyword("SOFTMASK_EDITOR");
 #endif
                 mat.SetTexture(s_SoftMaskTexId, softMask.softMaskBuffer);
+                mat.SetTexture("_SoftMaskTex2", softMask.softMaskBuffer2);
                 mat.SetInt(s_StencilCompId, m_UseStencil ? (int) CompareFunction.Equal : (int) CompareFunction.Always);
 
                 var root = MaskUtilities.FindRootSortOverrideCanvas(transform);

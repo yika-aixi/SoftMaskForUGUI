@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR;
 
 namespace Coffee.UISoftMask.Demos
 {
@@ -16,17 +15,20 @@ namespace Coffee.UISoftMask.Demos
         // Use this for initialization
         void OnEnable()
         {
-            title.SetActive(true);
+            if (title)
+                title.SetActive(true);
 
-            text.text = string.Format("GPU: {0}\nDeviceType: {1}\nShaderLevel: {2}\nUVStartsAtTop: {3}",
-                SystemInfo.graphicsDeviceName,
-                SystemInfo.graphicsDeviceType,
-                SystemInfo.graphicsShaderLevel,
-                SystemInfo.graphicsUVStartsAtTop);
+            if (text)
+                text.text = string.Format("VRSettings: {0}\nloadedDeviceName: {1}\nstereoRenderingMode: {2}\nUVStartsAtTop: {3}",
+                    XRSettings.enabled,
+                    XRSettings.loadedDeviceName,
+                    XRSettings.stereoRenderingMode,
+                    SystemInfo.graphicsUVStartsAtTop);
 
             for (int i = 0; i < softMask.Length; i++)
             {
                 softMaskBufferViewer[i].texture = softMask[i].softMaskBuffer;
+                softMaskBufferViewer[i+1].texture = softMask[i].softMaskBuffer2;
             }
         }
 

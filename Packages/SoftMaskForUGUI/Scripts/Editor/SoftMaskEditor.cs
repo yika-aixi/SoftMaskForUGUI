@@ -70,6 +70,7 @@ namespace Coffee.UISoftMask
                 var tex = current.softMaskBuffer;
                 var width = tex.width * k_PreviewSize / tex.height;
                 EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(width, k_PreviewSize), tex, null, ScaleMode.ScaleToFit);
+                EditorGUI.DrawPreviewTexture(GUILayoutUtility.GetRect(width, k_PreviewSize), current.softMaskBuffer2, null, ScaleMode.ScaleToFit);
                 Repaint();
             }
 

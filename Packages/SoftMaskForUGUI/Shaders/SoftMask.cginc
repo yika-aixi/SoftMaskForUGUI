@@ -2,6 +2,7 @@
 #define UI_SOFTMASK_INCLUDED
 
 sampler2D _SoftMaskTex;
+sampler2D _SoftMaskTex2;
 float _Stencil;
 float4x4 _GameVP;
 float4x4 _GameTVP;
@@ -36,7 +37,10 @@ float SoftMaskInternal(float4 clipPos)
 		view.y = lerp(view.y, 1 - view.y, step(0, _ProjectionParams.x));
 	#endif
 
-	fixed4 mask = tex2D(_SoftMaskTex, view);
+    #if UNITY_SINGLE_PASS_STEREO
+    view = lerp(view, view - half2(1, 0), unity_StereoEyeIndex);
+    #endif
+	fixed4 mask = lerp(tex2D(_SoftMaskTex, view), tex2D(_SoftMaskTex2, view), unity_StereoEyeIndex);
 	half4 alpha = saturate(lerp(fixed4(1, 1, 1, 1), lerp(mask, 1 - mask, _MaskInteraction - 1), _MaskInteraction))
 	#if SOFTMASK_EDITOR
 		* step(0, view.x) * step(view.x, 1) * step(0, view.y) * step(view.y, 1)
