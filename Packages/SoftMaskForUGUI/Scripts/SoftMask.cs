@@ -675,13 +675,24 @@ namespace Coffee.UISoftMask
         private static void GetDesamplingSize(DesamplingRate rate, out int w, out int h)
         {
 #if UNITY_EDITOR
-            var res = UnityEditor.UnityStats.screenRes.Split('x');
-            w = Mathf.Max(64, int.Parse(res[0]));
-            h = Mathf.Max(64, int.Parse(res[1]));
-#else
-			w = Screen.width;
-			h = Screen.height;
+            if (!Application.isPlaying)
+            {
+                var res = UnityEditor.UnityStats.screenRes.Split('x');
+                w = Mathf.Max(64, int.Parse(res[0]));
+                h = Mathf.Max(64, int.Parse(res[1]));
+            }
+            else
 #endif
+            if (Screen.fullScreenMode == FullScreenMode.Windowed)
+            {
+                w = Screen.width;
+                h = Screen.height;
+            }
+            else
+            {
+                w = Screen.currentResolution.width;
+                h = Screen.currentResolution.height;
+            }
 
             if (rate == DesamplingRate.None)
                 return;
