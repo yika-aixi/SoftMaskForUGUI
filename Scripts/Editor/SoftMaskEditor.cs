@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using UnityEditor;
 using System.Linq;
 using Google;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using UnityEditor.Rendering;
 using UnityEngine.Rendering;
 
@@ -22,6 +24,16 @@ namespace Coffee.UISoftMask
         private static readonly List<Graphic> s_Graphics = new List<Graphic>();
         private static bool s_Preview;
 
+        class BuildCheck:IPreprocessBuildWithReport
+        {
+            public int  callbackOrder { get; }
+            
+            public void OnPreprocessBuild(BuildReport report)
+            {
+                _regShader();
+            }
+        }
+        
         [InitializeOnLoadMethod]
         static void _regShader()
         {
