@@ -63,6 +63,9 @@ namespace Coffee.UISoftMask
                 }                
 
                 graphicsManager.ApplyModifiedProperties();
+                
+                EditorUtility.SetDirty(graphicsManager.targetObject);
+                
             }
         }
 
