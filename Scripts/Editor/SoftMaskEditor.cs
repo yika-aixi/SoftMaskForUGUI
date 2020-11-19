@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using System.Linq;
+using Google;
+using UnityEditor.Rendering;
+using UnityEngine.Rendering;
 
 
 namespace Coffee.UISoftMask
@@ -18,6 +21,38 @@ namespace Coffee.UISoftMask
         private const string k_PrefsPreview = "SoftMaskEditor_Preview";
         private static readonly List<Graphic> s_Graphics = new List<Graphic>();
         private static bool s_Preview;
+
+        [InitializeOnLoadMethod]
+        static void _regShader()
+        {
+            const string GraphicsSettingsAssetPath = "ProjectSettings/GraphicsSettings.asset";
+            const string AlwaysIncludedShadersName = "m_AlwaysIncludedShaders";
+
+            using (SerializedObject graphicsManager = new SerializedObject(UnityEditor.AssetDatabase.LoadMainAssetAtPath(GraphicsSettingsAssetPath)))
+            {
+                using (var field = graphicsManager.FindProperty(AlwaysIncludedShadersName))
+                {
+                    var softShader = Shader.Find("Hidden/SoftMask");
+                    
+                    for (var i = 0; i < field.arraySize; i++)
+                    {
+                        using (var shader = field.GetArrayElementAtIndex(i))
+                        {
+                            if (shader.objectReferenceValue == softShader)
+                            {
+                                return;
+                            }
+                        }    
+                    }
+                    
+                    field.arraySize++;
+
+                    field.GetArrayElementAtIndex(field.arraySize - 1).objectReferenceValue = softShader;
+                }                
+
+                graphicsManager.ApplyModifiedProperties();
+            }
+        }
 
         private void OnEnable()
         {

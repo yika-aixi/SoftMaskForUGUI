@@ -252,7 +252,7 @@ namespace Coffee.UISoftMask
                     : _material =
                         new Material(s_SoftMaskShader
                             ? s_SoftMaskShader
-                            : s_SoftMaskShader = Resources.Load<Shader>("SoftMask")) {hideFlags = HideFlags.HideAndDontSave};
+                            : s_SoftMaskShader = Shader.Find("Hidden/SoftMask"));
             }
         }
 
