@@ -45,12 +45,24 @@ namespace Coffee.UISoftMask
                 using (var field = graphicsManager.FindProperty(AlwaysIncludedShadersName))
                 {
                     var softShader = Shader.Find("Hidden/SoftMask");
-                    
+                    var uiSoftShader = Shader.Find("Hidden/UI/Default (SoftMaskable)");
+
+                    int hitCount = 0;
                     for (var i = 0; i < field.arraySize; i++)
                     {
                         using (var shader = field.GetArrayElementAtIndex(i))
                         {
                             if (shader.objectReferenceValue == softShader)
+                            {
+                                hitCount++;
+                            }
+                            
+                            if (shader.objectReferenceValue == uiSoftShader)
+                            {
+                                hitCount++;
+                            }
+
+                            if (hitCount == 2)
                             {
                                 return;
                             }
@@ -58,8 +70,10 @@ namespace Coffee.UISoftMask
                     }
                     
                     field.arraySize++;
-
                     field.GetArrayElementAtIndex(field.arraySize - 1).objectReferenceValue = softShader;
+                    
+                    field.arraySize++;
+                    field.GetArrayElementAtIndex(field.arraySize - 1).objectReferenceValue = uiSoftShader;
                 }                
 
                 graphicsManager.ApplyModifiedProperties();
